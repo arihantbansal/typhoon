@@ -107,6 +107,8 @@ pub async fn create_workspace(
         name = name
         programs = []
 
+        [program_ids]
+
         [build]
         idl = true
         "idl-out" = "target/idl"

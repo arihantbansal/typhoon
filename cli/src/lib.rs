@@ -88,6 +88,11 @@ pub enum Command {
         #[arg(short, long, default_value = "localnet")]
         network: String,
     },
+    /// Manage program keys
+    Keys {
+        #[command(subcommand)]
+        subcommand: KeysSubcommand,
+    },
 }
 
 /// Subcommands for the 'add' command
@@ -107,6 +112,19 @@ pub enum AddSubcommand {
         program: String,
         /// Name of the instruction
         name: String,
+    },
+}
+
+/// Subcommands for the 'keys' command
+#[derive(Debug, Subcommand)]
+pub enum KeysSubcommand {
+    /// List all program keys in the workspace
+    List,
+    /// Sync program IDs from keypair files to source code
+    Sync {
+        /// Only sync the given program instead of all programs
+        #[arg(short, long)]
+        program_name: Option<String>,
     },
 }
 
@@ -156,6 +174,7 @@ pub enum SecuritySubcommand {
 
 pub mod bindings;
 pub mod build;
+pub mod keys;
 pub mod scaffold;
 pub mod security;
 pub mod templates;

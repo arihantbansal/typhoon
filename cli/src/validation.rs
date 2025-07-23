@@ -1,7 +1,7 @@
 //! Input validation utilities
 //! Validates names, identifiers, and other user inputs for CLI commands
 
-use {anyhow::Result, regex::Regex, solana_sdk::pubkey::Pubkey, std::str::FromStr};
+use {anyhow::Result, regex::Regex, solana_pubkey::Pubkey, std::str::FromStr};
 
 /// Validate program name according to Rust package naming conventions
 pub fn validate_program_name(name: &str) -> Result<()> {

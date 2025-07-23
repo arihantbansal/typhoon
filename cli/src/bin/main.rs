@@ -5,7 +5,7 @@ use {
     anyhow::Result,
     clap::Parser,
     colored::Colorize,
-    typhoon_cli::{AddSubcommand, Cli, Command, SecuritySubcommand},
+    typhoon_cli::{AddSubcommand, Cli, Command, KeysSubcommand, SecuritySubcommand},
 };
 
 /// Main entry point for the Typhoon CLI
@@ -143,6 +143,14 @@ async fn main() -> Result<()> {
             // TODO: Implement deployment functionality
             anyhow::bail!("Deploy command is not yet implemented")
         }
+        Command::Keys { subcommand } => match subcommand {
+            KeysSubcommand::List => {
+                typhoon_cli::keys::list()?;
+            }
+            KeysSubcommand::Sync { program_name } => {
+                typhoon_cli::keys::sync(program_name)?;
+            }
+        },
     }
 
     Ok(())

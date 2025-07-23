@@ -15,6 +15,12 @@ pub async fn build(program: Option<&str>, generate_idl: bool) -> Result<()> {
     let workspace_root =
         find_workspace_root()?.ok_or_else(|| anyhow::anyhow!("Not in a Typhoon workspace"))?;
 
+    // Automatically sync keys before building
+    println!("{} Syncing program keys before build...", "▶".blue().bold());
+    if let Err(e) = crate::keys::sync(program.map(|s| s.to_string())) {
+        eprintln!("Warning: Failed to sync keys before build: {e}");
+    }
+
     let progress = ProgressBar::new_spinner();
     progress.set_style(
         ProgressStyle::default_spinner()

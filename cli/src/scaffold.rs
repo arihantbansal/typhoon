@@ -61,6 +61,7 @@ pub async fn create_program_in_path(path: &Path, name: &str, template: Option<&s
         "solana-signer" = "2.2.1"
         "solana-system-interface" = "1.0.0"
         "solana-transaction" = "2.2.1"
+        toml = "0.8"
         "typhoon-instruction-builder" = "0.1.0-alpha"
     };
 
@@ -93,7 +94,7 @@ pub async fn create_program_in_path(path: &Path, name: &str, template: Option<&s
     fs::create_dir_all(&tests_dir).context("Failed to create tests directory")?;
 
     // Generate basic integration test
-    let test_content = templates::generate_test_template(name);
+    let test_content = templates::generate_test_template(name, template);
     fs::write(tests_dir.join("integration.rs"), test_content)
         .context("Failed to write integration test")?;
 
@@ -141,15 +142,25 @@ pub async fn add_program(name: &str, template: Option<&str>) -> Result<()> {
         let mut typhoon_toml =
             toml::from_str::<toml::Value>(&fs::read_to_string(&typhoon_toml_path)?)?;
 
-        if let Some(programs) = typhoon_toml
-            .get_mut("workspace")
-            .and_then(|w| w.get_mut("programs"))
-            .and_then(|p| p.as_array_mut())
+        // Add to programs section
+        if let Some(programs_table) = typhoon_toml
+            .get_mut("programs")
+            .and_then(|p| p.as_table_mut())
         {
-            programs.push(toml::Value::String(name.to_string()));
+            let mut program_config = toml::map::Map::new();
+            program_config.insert(
+                "path".to_string(),
+                toml::Value::String(format!("programs/{name}")),
+            );
+            programs_table.insert(name.to_string(), toml::Value::Table(program_config));
         }
 
         fs::write(&typhoon_toml_path, toml::to_string_pretty(&typhoon_toml)?)?;
+
+        // Automatically sync keys for the new program
+        if let Err(e) = crate::keys::sync(Some(name.to_string())) {
+            eprintln!("Warning: Failed to sync keys for new program: {e}");
+        }
     }
 
     Ok(())
