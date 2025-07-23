@@ -53,8 +53,14 @@ pub async fn create_program_in_path(path: &Path, name: &str, template: Option<&s
         "typhoon-idl-generator" = "0.1.0-alpha"
 
         ["dev-dependencies"]
-        litesvm = "0.6"
-        "solana-sdk" = "2.1"
+        litesvm = "0.6.1"
+        "solana-instruction" = "2.2.1"
+        "solana-keypair" = "2.2.1"
+        "solana-native-token" = "2.2.1"
+        "solana-pubkey" = "2.2.1"
+        "solana-signer" = "2.2.1"
+        "solana-system-interface" = "1.0.0"
+        "solana-transaction" = "2.2.1"
         "typhoon-instruction-builder" = "0.1.0-alpha"
     };
 

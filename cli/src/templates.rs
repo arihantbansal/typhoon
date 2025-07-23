@@ -358,34 +358,57 @@ pub struct TokenAccount {
 "#;
 
 pub fn generate_test_template(program_name: &str) -> String {
+    let program_name_snake = program_name.replace("-", "_");
     format!(
         r#"use {{
     litesvm::LiteSVM,
-    solana_sdk::{{
-        instruction::{{AccountMeta, Instruction}},
-        pubkey::Pubkey,
-        signature::{{Keypair, Signer}},
-        transaction::Transaction,
-    }},
+    solana_keypair::Keypair,
+    solana_native_token::LAMPORTS_PER_SOL,
+    solana_pubkey::{{pubkey, Pubkey}},
+    solana_signer::Signer,
+    solana_transaction::Transaction,
+    std::path::PathBuf,
     typhoon_instruction_builder::generate_instructions_client,
 }};
 
-generate_instructions_client!(
-    CLIENT = {},
-    PATH = "../target/idl/{}.json"
-);
+const ID: Pubkey = pubkey!("11111111111111111111111111111111");
+
+fn read_program() -> Vec<u8> {{
+    let mut so_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    so_path.push("target/deploy/{program_name_snake}.so");
+
+    std::fs::read(so_path).unwrap()
+}}
+
+generate_instructions_client!({program_name_snake});
 
 #[test]
-fn test_initialize() {{
+fn integration_test() {{
     let mut svm = LiteSVM::new();
-    svm.airdrop(&svm.payer().pubkey(), 10_000_000_000).unwrap();
+    let admin_kp = Keypair::new();
+    let admin_pk = admin_kp.pubkey();
 
-    // TODO: Implement test logic
+    svm.airdrop(&admin_pk, 10 * LAMPORTS_PER_SOL).unwrap();
+
+    let program_bytes = read_program();
+    svm.add_program(ID, &program_bytes);
+
+    // TODO: Add your test logic here
+    // Example: Create accounts, call instructions, verify state changes
     
-    assert!(true);
+    // Test initialize instruction
+    let ix = InitializeInstruction {{
+        payer: admin_pk,
+        system_program: solana_system_interface::program::ID,
+    }}
+    .into_instruction();
+    
+    let hash = svm.latest_blockhash();
+    let tx = Transaction::new_signed_with_payer(&[ix], Some(&admin_pk), &[&admin_kp], hash);
+    let result = svm.send_transaction(tx);
+    
+    assert!(result.is_ok(), "Initialize instruction should succeed");
 }}
-"#,
-        program_name.replace("-", "_"),
-        program_name.replace("-", "_")
+"#
     )
 }

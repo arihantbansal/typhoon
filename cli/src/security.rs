@@ -412,7 +412,8 @@ pub async fn run_security_checks(verify: bool, audit: bool) -> Result<()> {
     if verify {
         progress.set_message("Running verifiable build...");
         if run_verifiable_build(&workspace_root, None, None, None, false, &progress)
-            .await.is_err()
+            .await
+            .is_err()
         {
             checks_passed = false;
         }
