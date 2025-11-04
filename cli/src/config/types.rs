@@ -35,10 +35,18 @@ impl Default for BuildConfig {
 }
 
 /// Test configuration.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize)]
 pub struct TestConfig {
     #[serde(default = "default_litesvm")]
     pub validator: String,
+}
+
+impl Default for TestConfig {
+    fn default() -> Self {
+        Self {
+            validator: default_litesvm(),
+        }
+    }
 }
 
 /// Project configuration.
