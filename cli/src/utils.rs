@@ -103,6 +103,15 @@ pub fn has_typhoon_dependency() -> Result<bool> {
     Ok(has_dep)
 }
 
+/// Checks if the current directory is a workspace (has [workspace] section).
+///
+/// # Errors
+/// Returns an error if Cargo.toml cannot be read or parsed.
+pub fn is_workspace() -> Result<bool> {
+    let toml = parse_cargo_toml()?;
+    Ok(toml.get("workspace").is_some())
+}
+
 /// Detects if a project path will be inside the Typhoon repository.
 ///
 /// This checks if the typhoon workspace structure exists relative to where

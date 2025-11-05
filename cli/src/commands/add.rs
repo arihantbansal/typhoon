@@ -25,18 +25,39 @@ pub fn run_program(name: &str, template: &str) -> Result<()> {
     }
 
     let workspace_path = PathBuf::from(".");
+
+    // Check for both programs/ (plural) and program/ (singular) directories
     let programs_dir = workspace_path.join("programs");
+    let program_dir = workspace_path.join("program");
 
-    if !programs_dir.exists() {
+    let (base_dir, dir_name) = if programs_dir.exists() {
+        (programs_dir, "programs")
+    } else if program_dir.exists() {
+        (program_dir, "program")
+    } else {
         return Err(Error::Other(anyhow::anyhow!(
-            "programs/ directory not found\n\n\
-            Expected workspace structure with programs/ directory."
+            "programs/ or program/ directory not found\n\n\
+            Expected workspace structure with programs/ or program/ directory."
         )));
-    }
+    };
 
-    let program_path = programs_dir.join(name);
-    if program_path.exists() {
-        return Err(Error::DirectoryExists(format!("programs/{name}")));
+    // Security: Verify that the programs directory is actually within the workspace
+    // This prevents symlink attacks where programs/ could point outside the workspace
+    let canonical_base = base_dir.canonicalize().map_err(|e| {
+        Error::Other(anyhow::anyhow!(
+            "failed to resolve {dir_name}/ directory path: {e}"
+        ))
+    })?;
+
+    let canonical_workspace = workspace_path
+        .canonicalize()
+        .map_err(|e| Error::Other(anyhow::anyhow!("failed to resolve workspace path: {e}")))?;
+
+    if !canonical_base.starts_with(&canonical_workspace) {
+        return Err(Error::Other(anyhow::anyhow!(
+            "{dir_name}/ directory is outside the workspace\n\n\
+            This may indicate a symlink attack or misconfigured workspace structure."
+        )));
     }
 
     println!("Adding program '{name}' to workspace...");
@@ -45,7 +66,7 @@ pub fn run_program(name: &str, template: &str) -> Result<()> {
     let use_path_deps = utils::is_inside_typhoon_repo(&workspace_path);
 
     // Create program
-    create_workspace_program(&workspace_path, name, template, use_path_deps)?;
+    create_workspace_program(&workspace_path, name, template, use_path_deps, dir_name)?;
 
     println!("\nSuccessfully added program '{name}'.");
     println!("\nThe program has been added to the workspace members.");
@@ -66,10 +87,26 @@ fn create_workspace_program(
     name: &str,
     template: &str,
     use_path_deps: bool,
+    programs_dir_name: &str,
 ) -> Result<()> {
-    let program_path = workspace_path.join("programs").join(name);
-    std::fs::create_dir_all(&program_path)
-        .map_err(|e| Error::Other(anyhow::anyhow!("failed to create program directory: {e}")))?;
+    let program_path = workspace_path.join(programs_dir_name).join(name);
+
+    // Use create_dir (not create_dir_all) to atomically check and create
+    // This prevents race conditions where another process creates the directory
+    // between our check and creation
+    match std::fs::create_dir(&program_path) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            return Err(Error::DirectoryExists(format!(
+                "{programs_dir_name}/{name}"
+            )));
+        }
+        Err(e) => {
+            return Err(Error::Other(anyhow::anyhow!(
+                "failed to create program directory: {e}"
+            )));
+        }
+    }
 
     // Generate keypair in workspace's target/deploy
     let program_id = keypair::generate_program_keypair(workspace_path, name)?;

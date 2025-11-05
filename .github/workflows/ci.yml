@@ -111,3 +111,19 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Run tests
         run: cargo test
+
+  run_cli_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
+      - name: Rust install
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v3.0.4/install)"
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Run CLI integration tests
+        run: cargo test --test integration --manifest-path cli/Cargo.toml
+      - name: Run CLI unit tests
+        run: cargo test --manifest-path cli/Cargo.toml --lib

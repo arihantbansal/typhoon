@@ -13,13 +13,45 @@ use {
 pub fn run() -> Result<()> {
     utils::check_rust_project()?;
 
-    let package_name = utils::get_package_name()?;
-    // Solana replaces dashes with underscores in binary names
-    let binary_name = package_name.replace('-', "_");
-    let so_path = format!("{}/{}.so", constants::DEPLOY_DIR, binary_name);
+    let is_workspace = utils::is_workspace()?;
 
-    if !Path::new(&so_path).exists() {
-        return Err(Error::ProgramNotBuilt(so_path));
+    // Validate that programs have been built before running tests
+    if !is_workspace {
+        // For single programs, check that the specific binary exists
+        let package_name = utils::get_package_name()?;
+        // Solana replaces dashes with underscores in binary names
+        let binary_name = package_name.replace('-', "_");
+        let so_path = format!("{}/{}.so", constants::DEPLOY_DIR, binary_name);
+
+        if !Path::new(&so_path).exists() {
+            return Err(Error::ProgramNotBuilt(so_path));
+        }
+    } else {
+        // For workspaces, check that at least one .so file exists
+        let deploy_dir = Path::new(constants::DEPLOY_DIR);
+
+        if !deploy_dir.exists() {
+            return Err(Error::Other(anyhow::anyhow!(
+                "target/deploy/ directory not found\n\n\
+                Have you run 'typhoon build' yet?"
+            )));
+        }
+
+        let has_programs = std::fs::read_dir(deploy_dir)
+            .map_err(|e| {
+                Error::Other(anyhow::anyhow!(
+                    "failed to read target/deploy/ directory: {e}"
+                ))
+            })?
+            .filter_map(|entry| entry.ok())
+            .any(|entry| entry.path().extension().map_or(false, |ext| ext == "so"));
+
+        if !has_programs {
+            return Err(Error::Other(anyhow::anyhow!(
+                "no program binaries found in target/deploy/\n\n\
+                Have you run 'typhoon build' yet?"
+            )));
+        }
     }
 
     println!("Running tests...\n");
