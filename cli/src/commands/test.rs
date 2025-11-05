@@ -44,7 +44,7 @@ pub fn run() -> Result<()> {
                 ))
             })?
             .filter_map(|entry| entry.ok())
-            .any(|entry| entry.path().extension().map_or(false, |ext| ext == "so"));
+            .any(|entry| entry.path().extension().is_some_and(|ext| ext == "so"));
 
         if !has_programs {
             return Err(Error::Other(anyhow::anyhow!(
