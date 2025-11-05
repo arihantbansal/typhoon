@@ -1,29 +1,20 @@
-[package]
-name = "{{project_name}}"
-version = "0.1.0"
+[workspace]
+members = ["programs/*", "tests/*"]
+resolver = "2"
+
+[workspace.package]
 edition = "2021"
-publish = false
 
-[features]
-logging = []
-
-[lib]
-crate-type = ["cdylib", "lib"]
-
-[lints.rust]
+[workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
     'cfg(target_os, values("solana"))',
 ] }
 
-[dependencies]
+[workspace.dependencies]
 bytemuck = { version = "1.21.0", features = ["derive"] }
-typhoon = {{typhoon_dep}}
-
-[build-dependencies]
-typhoon-idl-generator = {{typhoon_idl_dep}}
-
-[dev-dependencies]
 litesvm = "0.8"
+typhoon = {{typhoon_dep}}
+typhoon-instruction-builder = {{typhoon_instruction_builder_dep}}
 solana-instruction = "3.0"
 solana-keypair = "3.0"
 solana-native-token = "3.0"
@@ -31,7 +22,6 @@ solana-pubkey = "3.0"
 solana-signer = "3.0"
 solana-system-interface = "2.0.0"
 solana-transaction = "3.0"
-typhoon-instruction-builder = {{typhoon_instruction_builder_dep}}
 
 [profile.release]
 lto = true

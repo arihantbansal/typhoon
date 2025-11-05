@@ -8,7 +8,7 @@ publish = false
 logging = []
 
 [lib]
-crate-type = ["cdylib", "lib"]
+crate-type = ["cdylib"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
@@ -16,11 +16,7 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 ] }
 
 [dependencies]
-bytemuck = { version = "1.21.0", features = ["derive"] }
 typhoon = {{typhoon_dep}}
-
-[build-dependencies]
-typhoon-idl-generator = {{typhoon_idl_dep}}
 
 [dev-dependencies]
 litesvm = "0.8"

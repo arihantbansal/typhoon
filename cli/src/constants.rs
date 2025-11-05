@@ -1,7 +1,5 @@
 //! Application-wide constants.
 
-pub const KEYPAIR_DIR: &str = ".keypairs";
-pub const PROGRAM_KEYPAIR_FILE: &str = "program-keypair.json";
 pub const DEPLOY_DIR: &str = "target/deploy";
 #[allow(dead_code)]
 pub const IDL_DIR: &str = "target/idl";

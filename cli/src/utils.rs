@@ -103,6 +103,48 @@ pub fn has_typhoon_dependency() -> Result<bool> {
     Ok(has_dep)
 }
 
+/// Detects if a project path will be inside the Typhoon repository.
+///
+/// This checks if the typhoon workspace structure exists relative to where
+/// the new project will be created, specifically looking for a workspace
+/// Cargo.toml with typhoon crate members.
+///
+/// # Arguments
+/// * `project_path` - The path where the new project will be created
+///
+/// Returns true if the project would be inside the typhoon repo, false otherwise.
+pub fn is_inside_typhoon_repo(project_path: &Path) -> bool {
+    // From the new project's location, check if ../../crates/lib/Cargo.toml exists
+    let typhoon_lib = project_path.join("../../crates/lib/Cargo.toml");
+    if !typhoon_lib.exists() {
+        return false;
+    }
+
+    // Check if ../../Cargo.toml exists and is a workspace
+    let workspace_toml = project_path.join("../../Cargo.toml");
+    if !workspace_toml.exists() {
+        return false;
+    }
+
+    // Read and parse the workspace Cargo.toml
+    if let Ok(content) = std::fs::read_to_string(&workspace_toml) {
+        if let Ok(toml) = toml::from_str::<Value>(&content) {
+            // Check if it has workspace.members that includes "crates/*"
+            if let Some(workspace) = toml.get("workspace") {
+                if let Some(members) = workspace.get("members") {
+                    if let Some(members_array) = members.as_array() {
+                        return members_array
+                            .iter()
+                            .any(|m| m.as_str() == Some("crates/*") || m.as_str() == Some("cli"));
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
