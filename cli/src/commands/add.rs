@@ -159,7 +159,7 @@ typhoon-idl-generator = {typhoon_idl_dep}
 "#,
         name = name,
         typhoon_idl_dep = if use_path_deps {
-            r#"{ path = "../../../crates/idl-generator" }"#.to_string()
+            r#"{ path = "../../../../crates/idl-generator" }"#.to_string()
         } else {
             format!(r#""{TYPHOON_VERSION}""#)
         }

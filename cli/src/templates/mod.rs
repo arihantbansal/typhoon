@@ -1,4 +1,13 @@
 //! Template rendering and file creation utilities.
+//!
+//! ## Solana Version
+//!
+//! The templates contain hard-coded Solana version "3.0" to match the
+//! Typhoon framework's target Solana version. When upgrading Solana support,
+//! the version strings in the template files must be updated manually:
+//! - `cli/templates/workspace/cargo.toml.template`
+//! - `cli/templates/counter/cargo.toml.template`
+//! - `cli/templates/hello-world/cargo.toml.template`
 
 pub mod counter;
 pub mod hello_world;
